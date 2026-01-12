@@ -15,7 +15,7 @@ set(MACOS_SOURCES "")
 if (APPLE)
   enable_language(OBJCXX)
   if (NOT IOS)
-  set(MACOS_SOURCES src/modules/keybinds/mouse/macos.mm src/modules/keybinds/keyboard/macos.mm)
+  set(MACOS_SOURCES src/macos.mm)
   endif()
 endif()
 
