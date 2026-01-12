@@ -10,7 +10,8 @@
 
 #include <Geode/modify/GJBaseGameLayer.hpp>
 #include <Geode/modify/CCEGLView.hpp>
-
+#include <alphalaneous.alphas-ui-pack/include/nodes/scroll/AdvancedScrollDelegate.hpp>
+#include <alphalaneous.alphas-ui-pack/include/nodes/scroll/ScrollDispatcher.hpp>
 #include <scn/scan.h>
 #include <enchantum/enchantum.hpp>
 
@@ -21,6 +22,7 @@
 using namespace geode::prelude;
 
 
+#define ETOSTRING(k) enchantum::to_string(k)
 
 enum class LevelKeys {
     unknown = -1,
@@ -40,6 +42,9 @@ enum class LevelKeys {
     middleMouse,
     mouse3,
     mouse4,
+
+    wheelUp,
+    wheelDown,
 
     cursor
 };
@@ -199,6 +204,16 @@ LevelKeys AlphaMouseButtonToLevelKeys(alpha::dispatcher::MouseButton button) {
     }
 }
 
+LevelKeys keyLevelIdentifierToValue(std::string_view levelkeyname) {
+    for(const auto& [keyVal, originalKeyName] : enchantum::entries_generator<LevelKeys>) {
+        auto keyName = fixKeyName(originalKeyName);
+        if(keyName == levelkeyname) {
+            return keyVal;
+        }
+    }
+    return LevelKeys::unknown;
+}
+
 
 static gd::vector<short> getGroupIDs(GameObject* obj) {
     gd::vector<short> res;
@@ -227,23 +242,32 @@ struct MyClickDelegate : public CCNode, alpha::dispatcher::TouchDelegate {
 	void clickEnded(alpha::dispatcher::TouchEvent* touch) override;
 };
 
+struct MyScrollDelegate : public CCNode, alpha::dispatcher::AdvancedScrollDelegate {
+    void scroll(float x, float y) override;
+};
+
 class $modify(MyBaseLayer, GJBaseGameLayer)
 {
     struct Fields {
         std::unordered_map<LevelKeys, groupId> upKeyMap;
         std::unordered_map<LevelKeys, groupId> downKeyMap;
         MyClickDelegate* touchDelegate = nullptr;
+        MyScrollDelegate* scrollDelegate = nullptr;
         bool controlPressed = false;
         bool altPressed = false;
         bool shiftPressed = false;
         bool scheduledModifiedKeys = false;
         bool active = false;
         GJBaseGameLayer* layer = nullptr;
+        int i = 0;
 
         //needs to be ccarray because moveObjects takes CCArray* and converting from vector to ccarray would be stupid
         CCArrayExt<GameObject*> cursorFollowObjects;
 
+        /*SPECIAL ONLY ONE GROUP ID!!!*/
         int cursorFollowGroupId = -1;
+        int wheelUpGroup = -1;
+        int wheelDownGroup = -1;
 
         
         void clear() {
@@ -252,6 +276,10 @@ class $modify(MyBaseLayer, GJBaseGameLayer)
             if(touchDelegate) {
                 CCTouchDispatcher::get()->removeDelegate(touchDelegate);
                 touchDelegate = nullptr;
+            }
+            if(scrollDelegate) {
+                alpha::dispatcher::ScrollDispatcher::get()->unregisterScroll(scrollDelegate);
+                scrollDelegate = nullptr;
             }
             controlPressed = false;
             altPressed = false;
@@ -262,39 +290,57 @@ class $modify(MyBaseLayer, GJBaseGameLayer)
             //no clear() in Ext
             cursorFollowObjects.inner()->removeAllObjects();
             cursorFollowGroupId = -1;
+            wheelUpGroup = -1;
+            wheelDownGroup = -1;
         }
-
-
         auto& getKeysMap(bool down) {
             return down ? downKeyMap : upKeyMap;
         }
 
 
         void addKeyBind(LevelKeys key, bool down, int groupId) {
-            getKeysMap(down).emplace(key, groupId);
+            switch(key) {
+                case LevelKeys::cursor: cursorFollowGroupId = groupId; return;
+                case LevelKeys::wheelUp: wheelUpGroup = groupId; return;
+                case LevelKeys::wheelDown: wheelDownGroup = groupId; return;
+                default: getKeysMap(down).emplace(key, groupId);
+            }
         }
 
 
         std::optional<groupId> getGroupId(LevelKeys k, bool down) {
+            log::debug("FINDING: {}", ETOSTRING(k));
             if(k == LevelKeys::unknown) return std::nullopt;
 
             auto map = getKeysMap(down);
             auto it = map.find(k);
-            if(it == map.end()) return std::nullopt;
+            if(it != map.end()) {
+                log::debug("{} found in map", enchantum::to_string(k));
+                return it->second;
+            }
 
-            return it->second;
+            switch(k) {
+                case LevelKeys::cursor: return cursorFollowGroupId;
+                case LevelKeys::wheelDown: return wheelDownGroup;
+                case LevelKeys::wheelUp: return wheelUpGroup;
+                default: return std::nullopt;
+            }
         }
 
         void spawnGroupIfDefined(LevelKeys k, bool down) {
             if(auto group = getGroupId(k, down)) {
                 log::info("KEY: {}, {}, GROUP: {}", enchantum::to_string(k), down ? "down" : "up", *group);
                 layer->spawnGroup(*group, false, 0, {}, 0, 0);
+                return;
             }
         }
 
         ~Fields() {
             if(touchDelegate) {
                 CCTouchDispatcher::get()->removeDelegate(touchDelegate);
+            }
+            if(scrollDelegate) {
+                alpha::dispatcher::ScrollDispatcher::get()->unregisterScroll(scrollDelegate);
             }
         }
     };
@@ -373,40 +419,61 @@ class $modify(MyBaseLayer, GJBaseGameLayer)
         }
 
 
-    for(const auto& o : fields->cursorFollowObjects) {
-        auto mousepos = getMousePos();
-        // Convert mouse to the same coordinate space where the object's position is defined
-        auto targetPos = o->getParent() ? o->getParent()->convertToNodeSpace(mousepos) : mousepos;
-        auto currentPos = o->getPosition();
-        auto delta = targetPos - currentPos;
-        moveObject(o, delta.x, delta.y, false);
+        for(const auto& o : m_fields->cursorFollowObjects) {
+            auto mousepos = getMousePos();
+            // Convert mouse to the same coordinate space where the object's position is defined
+            auto targetPos = o->getParent() ? o->getParent()->convertToNodeSpace(mousepos) : mousepos;
+            auto currentPos = o->getRealPosition();
+            //log::info("{}", currentPos);
+            auto delta = targetPos - currentPos;
+            moveObject(o, delta.x, delta.y, true);
+
+        }
+
     }
 
+
+    void resetLevelVariables() {
+
+        GJBaseGameLayer::resetLevelVariables();
+
+        for(const auto& o : m_fields->cursorFollowObjects) {
+            o->setLastPosition(o->getPosition());
+        }
+    }
+
+    struct ParsedTextLabel {
+        LevelKeys key;
+        bool keyDown;
+        int group;
+    };
+
+    std::optional<ParsedTextLabel> getTupleFromLabel(std::string_view t) {
+        if(auto result = scn::scan<std::string, int, int>(t, "@{} {} = {}")) {
+            auto values = result->values();
+            if(auto enumval = keyLevelIdentifierToValue(std::get<0>(values)); enumval != LevelKeys::unknown) {
+                return ParsedTextLabel{enumval, std::get<1>(values) == 1, std::get<2>(values)};
+            }
+        }
+        if(auto groupOnlyResult = scn::scan<std::string, int>(t, "@{} = {}")) {
+            auto values = groupOnlyResult->values();
+            if(auto enumval = keyLevelIdentifierToValue(std::get<0>(values)); enumval != LevelKeys::unknown) {
+                return ParsedTextLabel{enumval, /*when no key*/0, std::get<1>(values)};
+            }
+        }
+        return std::nullopt;
     }
 
     void setupText(std::string_view t)
     {
         log::debug("parsing {}", t);
-        auto result = scn::scan<std::string, int, int>(t, "@{} {} = {}");
-        if(!result) {
-            if(t.front() == '@') {
-                log::error("'{}' Could not parse label with format @{{}} {{}} = {{}}, mind the spaces", t);
-            }
+        if(t.front() != '@') return;
+        auto parsed_opt = getTupleFromLabel(t);
+        if(!parsed_opt) {
             return;
         }
-        auto& [levelKeyName, keyDown, levelGroupId] = result->values();
-        for(const auto& [keyVal, originalKeyName] : enchantum::entries_generator<LevelKeys>) {
-            auto keyName = fixKeyName(originalKeyName);
-            //log::debug("{} {}", keyName, levelKeyName);
-            if(keyName == levelKeyName) {
-                if(keyVal == LevelKeys::cursor) {
-                    setupCursorGroup(levelGroupId);
-                    continue;
-                }
-                m_fields->addKeyBind(keyVal, keyDown == 1, levelGroupId);
-                log::debug("Added key {}: {} with group ID: {}", keyDown ? "down" : "up", enchantum::to_string(keyVal), levelGroupId);
-            }
-        }
+        auto& parsed = *parsed_opt;
+        m_fields->addKeyBind(parsed.key, parsed.keyDown, parsed.group);
     }
 
     void setupCursorGroup(int cursorGroupId) {
@@ -451,12 +518,32 @@ class $modify(MyBaseLayer, GJBaseGameLayer)
             CCTouchDispatcher::get()->addTargetedDelegate(fields->touchDelegate, INT_MIN, false);
         }
 
+        if(!fields->scrollDelegate) {
+            fields->scrollDelegate = new MyScrollDelegate;
+            fields->scrollDelegate->setID("iandyhd.keyboardsupport/scroll-delegate");
+            fields->scrollDelegate->setContentSize(this->getContentSize());
+            addChild(fields->scrollDelegate, INT_MAX);
+            alpha::dispatcher::ScrollDispatcher::get()->registerScroll(fields->scrollDelegate);
+        }
+
         if(!fields->scheduledModifiedKeys) {
             schedule(schedule_selector(MyBaseLayer::updateLoop), 0);
             fields->scheduledModifiedKeys = true;
         }
 
+        if(fields->cursorFollowGroupId != -1) {
+            setupCursorGroup(fields->cursorFollowGroupId);
+        }
         fields->active = true;
+
+        log::info("{} {} {}", fields->cursorFollowGroupId, fields->wheelDownGroup, fields->wheelUpGroup);
+    }
+
+    void handleScroll(float x, float y) {
+        if(y != 0) {
+            //scrolling up is minus apparently
+            m_fields->spawnGroupIfDefined(y < 0 ? LevelKeys::wheelUp : LevelKeys::wheelDown, /*this is ignored*/ false);
+        }
     }
 
 
@@ -501,4 +588,10 @@ bool MyClickDelegate::clickBegan(alpha::dispatcher::TouchEvent *touch) {
 void MyClickDelegate::clickEnded(alpha::dispatcher::TouchEvent* touch) {
     log::debug("click ended {}", enchantum::to_string(touch->getButton()));
     reinterpret_cast<MyBaseLayer*>(GJBaseGameLayer::get())->handleClick(touch, false);
+}
+
+void MyScrollDelegate::scroll(float x, float y) {
+    log::info("scroll {}, {}", x, y);
+    reinterpret_cast<MyBaseLayer*>(GJBaseGameLayer::get())->handleScroll(x, y);
+
 }
