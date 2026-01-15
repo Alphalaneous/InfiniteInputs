@@ -12,6 +12,10 @@
 	"developer": "iAndyHD3",
 	"description": "",
 	"dependencies":{
-		"alphalaneous.alphas-ui-pack": ">=1.0.0"
+		"alphalaneous.alphas-ui-pack": ">=1.0.0",
+		"alphalaneous.editortab_api": ">=1.0.19"
+	},
+	"resources": {
+		"sprites": ["resources/logo.png"]
 	}
 }
