@@ -54,12 +54,15 @@ auto& MyBaseLayer::Fields::getKeysMap(bool down) {
 }
 
 void MyBaseLayer::Fields::addKeyBind(LevelKeys key, bool down, int groupId) {
+
     switch(key) {
-        case LevelKeys::cursor: cursorFollowGroupId = groupId; return;
-        case LevelKeys::wheelUp: wheelUpGroup = groupId; return;
-        case LevelKeys::wheelDown: wheelDownGroup = groupId; return;
+        case LevelKeys::cursor:     cursorFollowGroupId =   groupId; break;
+        case LevelKeys::wheelUp:    wheelUpGroup        =   groupId; break;
+        case LevelKeys::wheelDown:  wheelDownGroup      =   groupId; break;
+
         default: getKeysMap(down).emplace(key, groupId);
     }
+    addedAtleastOneKey = true;
 }
 
 std::optional<groupId> MyBaseLayer::Fields::getGroupId(LevelKeys k, bool down) {
@@ -180,6 +183,7 @@ void MyBaseLayer::updateLoop(float) {
 
 void MyBaseLayer::resetLevelVariables() {
     GJBaseGameLayer::resetLevelVariables();
+    log::info("resetting");
 
     for(const auto& o : m_fields->cursorFollowObjects) {
         o->setLastPosition(o->getPosition());
@@ -212,14 +216,20 @@ void MyBaseLayer::setupCursorGroup(int cursorGroupId) {
 bool MyBaseLayer::setupTextLabelKeys_step1() {
     auto fields = m_fields.self();
     auto texts = getAllTextsFromLabels(this);
-    std::ranges::for_each(texts, [this](auto& t){setupText(t); });
+    std::ranges::for_each(texts, [this](auto& t) {setupText(t); });
 
     log::info("Added {} down keys", fields->downKeyMap.size());
     log::info("Added {} up keys", fields->upKeyMap.size());
-    return !fields->downKeyMap.empty() || !fields->upKeyMap.empty(); 
+    log::info("Cursor Group: {}", fields->cursorFollowGroupId);
+    log::info("Wheel Up Group: {}", fields->wheelUpGroup);
+    log::info("Wheel Down Group: {}", fields->wheelDownGroup);
+    return fields->addedAtleastOneKey;
 }
 
 bool MyBaseLayer::isActive() {
+    if(!m_isEditor && !reinterpret_cast<PlayLayer*>(this)->m_started) {
+        return false;
+    }
     return m_fields->active;
 }
 
@@ -257,13 +267,12 @@ void MyBaseLayer::setupKeybinds_step0(float) {
     }
     fields->active = true;
 
-    log::info("{} {} {}", fields->cursorFollowGroupId, fields->wheelDownGroup, fields->wheelUpGroup);
 }
 
 void MyBaseLayer::handleScroll(float x, float y) {
     if(y != 0) {
         //scrolling up is minus apparently
-        m_fields->spawnGroupIfDefined(y < 0 ? LevelKeys::wheelUp : LevelKeys::wheelDown, /*this is ignored*/ false);
+        nh_handleKeypress(y < 0 ? LevelKeys::wheelUp : LevelKeys::wheelDown, /*this is ignored*/ false);
     }
 }
 
@@ -273,8 +282,10 @@ void MyBaseLayer::nh_handleKeypress(LevelKeys key, bool down) {
 }
 
 bool MyClickDelegate::clickBegan(alpha::dispatcher::TouchEvent *touch) {
+    auto bl = reinterpret_cast<MyBaseLayer*>(GJBaseGameLayer::get());
+    if(!bl->isActive()) return false;
     log::debug("click began {}", enchantum::to_string(touch->getButton()));
-    reinterpret_cast<MyBaseLayer*>(GJBaseGameLayer::get())->handleClick(touch, true);
+    bl->handleClick(touch, true);
     return true;
 }
 
@@ -284,6 +295,8 @@ void MyClickDelegate::clickEnded(alpha::dispatcher::TouchEvent* touch) {
 }
 
 void MyScrollDelegate::scroll(float x, float y) {
+    auto bl = reinterpret_cast<MyBaseLayer*>(GJBaseGameLayer::get());
+    if(!bl->isActive()) return;
     log::info("scroll {}, {}", x, y);
-    reinterpret_cast<MyBaseLayer*>(GJBaseGameLayer::get())->handleScroll(x, y);
+    bl->handleScroll(x, y);
 }

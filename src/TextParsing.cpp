@@ -7,18 +7,49 @@
 
 using namespace geode::prelude;
 
+std::optional<bool> praseKeyUpDownSpecifier(char specifier) {
+    switch(specifier) {
+        case 'U': [[fallthrough]];
+        case '0': return false;
+        case 'D': [[fallthrough]];
+        case '1': return true;
+
+        default: return std::nullopt;
+    }
+}
+
 std::optional<ParsedTextLabel> getTupleFromLabel(std::string_view t) {
-    if(auto result = scn::scan<std::string, int, int>(t, "@{} {} = {}")) {
-        auto values = result->values();
-        if(auto enumval = keyLevelIdentifierToValue(std::get<0>(values)); enumval != LevelKeys::unknown) {
-            return ParsedTextLabel{enumval, std::get<1>(values) == 1, std::get<2>(values)};
+    std::string keyStr;
+    bool keyDown = false;
+    int group = 0;
+    
+    if (auto result = scn::scan<std::string, char, int>(t, "@{} {} = {}")) {
+        auto [key, keyDownParsed, groupParsed] = result->values();
+        keyStr = std::move(key);
+
+        if(auto keyDownOpt = praseKeyUpDownSpecifier(keyDownParsed)) {
+            keyDown = *keyDownOpt;
+        } else {
+            geode::log::error("Not accepted key down/up specifier: {}", keyDownParsed);
+            return std::nullopt;
         }
+
+        group = groupParsed;
     }
-    if(auto groupOnlyResult = scn::scan<std::string, int>(t, "@{} = {}")) {
-        auto values = groupOnlyResult->values();
-        if(auto enumval = keyLevelIdentifierToValue(std::get<0>(values)); enumval != LevelKeys::unknown) {
-            return ParsedTextLabel{enumval, /*when no key*/0, std::get<1>(values)};
-        }
+    else if (auto result = scn::scan<std::string, int>(t, "@{} = {}")) {
+        auto [key, groupParsed] = result->values();
+        keyStr = std::move(key);
+        group = groupParsed;
     }
-    return std::nullopt;
+    else {
+        return std::nullopt;
+    }
+    
+    auto enumval = keyLevelIdentifierToValue(keyStr);
+    if (enumval == LevelKeys::unknown) {
+        log::error("Unknown key name: {} (for group: {})", keyStr, group);
+        return std::nullopt;
+    }
+    
+    return ParsedTextLabel{enumval, keyDown, group};
 }

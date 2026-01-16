@@ -1,6 +1,8 @@
-#include <Geode/modify/EditorUI.hpp>
+// #include <Geode/modify/EditorUI.hpp>
 
 
-class $modify(MyEditorUI, EditorUI) {
-    bool init(LevelEditorLayer* editorLayer);
-};
+// class $modify(MyEditorUI, EditorUI) {
+//     bool init(LevelEditorLayer* editorLayer);
+//     GameObject* createObject(int objectID, cocos2d::CCPoint position);
+    
+// };

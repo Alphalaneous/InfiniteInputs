@@ -37,6 +37,7 @@ class $modify(MyBaseLayer, GJBaseGameLayer)
         bool shiftPressed = false;
         bool scheduledModifiedKeys = false;
         bool active = false;
+        bool addedAtleastOneKey = false;
         GJBaseGameLayer* layer = nullptr;
         int i = 0;
 
@@ -47,7 +48,6 @@ class $modify(MyBaseLayer, GJBaseGameLayer)
         int cursorFollowGroupId = -1;
         int wheelUpGroup = -1;
         int wheelDownGroup = -1;
-
         
         void clear();
         auto& getKeysMap(bool down);
@@ -60,6 +60,7 @@ class $modify(MyBaseLayer, GJBaseGameLayer)
 
         ~Fields();
     };
+
 
     $override
     bool init();
