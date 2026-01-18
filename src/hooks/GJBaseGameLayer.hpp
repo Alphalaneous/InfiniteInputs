@@ -35,7 +35,6 @@ class $modify(MyBaseLayer, GJBaseGameLayer)
         bool controlPressed = false;
         bool altPressed = false;
         bool shiftPressed = false;
-        bool scheduledModifiedKeys = false;
         bool active = false;
         bool addedAtleastOneKey = false;
         GJBaseGameLayer* layer = nullptr;
@@ -56,6 +55,7 @@ class $modify(MyBaseLayer, GJBaseGameLayer)
 
         std::optional<groupId> getGroupId(LevelKeys k, bool down);
 
+
         void spawnGroupIfDefined(LevelKeys k, bool down);
 
         ~Fields();
@@ -64,6 +64,10 @@ class $modify(MyBaseLayer, GJBaseGameLayer)
 
     $override
     bool init();
+
+    $override
+    void update(float);
+
 
     void delayedInit(float);
 
@@ -75,6 +79,7 @@ class $modify(MyBaseLayer, GJBaseGameLayer)
 
     void updateLoop(float);
 
+
     void resetLevelVariables();
 
     void setupText(std::string_view t);
@@ -84,11 +89,14 @@ class $modify(MyBaseLayer, GJBaseGameLayer)
     //true if correctly registered atleast one keybind
     bool setupTextLabelKeys_step1();
 
-    bool isActive();
+    bool isModActive();
 
     void setupKeybinds_step0(float);
 
     void handleScroll(float x, float y);
 
     void nh_handleKeypress(LevelKeys key, bool down);
+
+    cocos2d::CCPoint screenToGame(const cocos2d::CCPoint& screenPos);
+
 };

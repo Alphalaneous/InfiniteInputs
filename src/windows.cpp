@@ -24,8 +24,9 @@ class $modify(cocos2d::CCEGLView)
     void onGLFWKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 	{
         CCEGLView::onGLFWKeyCallback(window, key, scancode, action, mods);
-        geode::log::debug("key {}, scancode {}, action {}, mods {}", key, scancode, action, mods);
         if(action >= 2) return;
+        geode::log::debug("key: {}, scancode: {}, action; {}, mods: {}", key, scancode, action, mods);
+
         CROSSPLATFORM_ON_KEY_CALLBACK(glfwKeyToLevelKey(key), action == 1);
 
 	}
