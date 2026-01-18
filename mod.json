@@ -8,7 +8,7 @@
 	},
 	"id": "iandyhd3.infinite_inputs",
 	"name": "Infinite Inputs",
-	"version": "v0.0.1-alpha.1",
+	"version": "v1.0.0",
 	"developer": "iAndyHD3",
 	"description": "Bind objs to cursor or keys to spawn group ID",
 	"dependencies":{
