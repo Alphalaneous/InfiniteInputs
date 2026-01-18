@@ -10,7 +10,7 @@
 	"name": "Infinite Inputs",
 	"version": "v0.0.1-alpha.1",
 	"developer": "iAndyHD3",
-	"description": "",
+	"description": "Bind objs to cursor or keys to spawn group ID",
 	"dependencies":{
 		"alphalaneous.alphas-ui-pack": ">=1.0.0",
 		"alphalaneous.editortab_api": ">=1.0.19"
