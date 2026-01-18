@@ -11,65 +11,18 @@ Tired of being limited to just 6 input triggers in your Geometry Dash levels? Th
 
 ## Usage
 
-This mod works with **text labels** using the following format:
+This mod works by adding a new **Input Trigger** that can be found in the triggers tab, next to the touch trigger. Internally this is a text object and will show as one for those without the mod. 
 
-`@{keyName} {keyDown} = {groupID}`
-
-
-
-### Parameters
-
-#### `keyName` (string)
-The identifier for the key or input. Must be written in exact **camelCase** as listed below. Case-sensitive.
-
-*Examples:* `f`, `enter`, `4`, `f5`, `leftShift`
-
-#### `keyDown` (number)
-`1` for key press (down), `0` for key release (up)
-
-#### `groupID` (number)
-The group ID to activate when the condition is met
-
-## Examples
-
-**Trigger group 93 when F is pressed:**
-
-`@f 1 = 93`
-
-
-**Trigger group 94 when F is released:**
-
-`@f 0 = 94`
-
+Within the trigger, you can choose different inputs to listen to, such as keyboard and mouse key presses and releases. 
 
 ## Special Keys
 
-### Mouse Wheel
+There are special keys that do not have a release event:
 
-Wheel actions (`wheelUp`, `wheelDown`) don't use the `keyDown` parameter.
-
-**Format:** `@{wheelUp|wheelDown} = {groupID}`
-
-**Trigger group 3 on wheel up:**
-
-`@wheelUp = 3`
-
-
-**Trigger group 2 on wheel down:**
-
-`@wheelDown = 2`
-
-
-### Cursor Follow
-
-Makes all objects in the specified group follow the mouse cursor.
-
-**Format:** `@cursor = {groupID}`
-
-**Example:**
-
-`@cursor = 4`
-
+- Mouse Wheel Up
+- Mouse Wheel D0wn
+- Lock to Cursor
+- On Mod Loaded
 
 ## Key Reference
 
@@ -84,7 +37,6 @@ Makes all objects in the specified group follow the mouse cursor.
 q, w, e, r, t, y, u, i, o, p
 a, s, d, f, g, h, j, k, l
 z, x, c, v, b, n, m
-
 
 ### Special Keys
 `enter, space, escape, backspace`
@@ -101,15 +53,15 @@ z, x, c, v, b, n, m
 ### Cursor
 `cursor`
 
+### Mod Loaded
+`modLoaded`
+
 ## Notes
 
-- All key names are case-sensitive and must be exact
-- Only one action per text label
-- Group IDs must be valid numbers in your level
+- These triggers work similarly to the UI trigger, and are all processed when the level is loaded. These cannot be spawned or toggled.
 - Geometry Dash defaults to QWERTY, regardless of operating system settings and there is no way to work around that at the moment 
 
-
-# Trouble Shooting
+# Troubleshooting
 
 Enable console in the geode console, as there are quite many logs to help pinpoint issues.
 
@@ -121,4 +73,4 @@ Or join the [Discord Server](discord.gg/7kyvwJVcqJ)
 # Special Thanks / Credits
 
 - [TheMilkCat](user:7060183) - For commissioning the mod!
-- Alphalaneous - For the amazing UI API, which this mod uses.
+- Alphalaneous - For the amazing UI API, which this mod uses, as well as the Custom Trigger UI.

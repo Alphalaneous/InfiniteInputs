@@ -1,5 +1,7 @@
 #include "TextParsing.hpp"
 #include "LevelKeys.hpp"
+#include <enchantum/enchantum.hpp>
+#include <fmt/format.h>
 #include <scn/scan.h>
 #include <Geode/utils/string.hpp>
 #include <Geode/utils/casts.hpp>
@@ -18,12 +20,24 @@ std::optional<bool> praseKeyUpDownSpecifier(char specifier) {
     }
 }
 
+std::string getLabelFromTuple(const ParsedTextLabel& t) {
+    switch (t.key) {
+        case LevelKeys::wheelUp:
+        case LevelKeys::wheelDown:
+        case LevelKeys::modLoaded:
+        case LevelKeys::cursor:
+            return fmt::format("inf_inp:{} = {}", enchantum::to_string(t.key), t.group);
+        default:
+            return fmt::format("inf_inp:{} {} = {}", fixKeyName(enchantum::to_string(t.key)), static_cast<unsigned int>(t.keyDown), t.group);
+    }
+}
+
 std::optional<ParsedTextLabel> getTupleFromLabel(std::string_view t) {
     std::string keyStr;
     bool keyDown = false;
     int group = 0;
     
-    if (auto result = scn::scan<std::string, char, int>(t, "@{} {} = {}")) {
+    if (auto result = scn::scan<std::string, char, int>(t, "inf_inp:{} {} = {}")) {
         auto [key, keyDownParsed, groupParsed] = result->values();
         keyStr = std::move(key);
 
@@ -36,7 +50,7 @@ std::optional<ParsedTextLabel> getTupleFromLabel(std::string_view t) {
 
         group = groupParsed;
     }
-    else if (auto result = scn::scan<std::string, int>(t, "@{} = {}")) {
+    else if (auto result = scn::scan<std::string, int>(t, "inf_inp:{} = {}")) {
         auto [key, groupParsed] = result->values();
         keyStr = std::move(key);
         group = groupParsed;

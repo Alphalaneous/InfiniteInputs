@@ -9,4 +9,5 @@ struct ParsedTextLabel {
     int group;
 };
 
+std::string getLabelFromTuple(const ParsedTextLabel& t);
 std::optional<ParsedTextLabel> getTupleFromLabel(std::string_view t);

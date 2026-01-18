@@ -199,6 +199,10 @@ void MyBaseLayer::updateLoop(float) {
         moveObject(o, delta.x, delta.y, false);
     }
 
+    if (!fields->spawnedModLoaded) {
+        fields->spawnGroupIfDefined(LevelKeys::modLoaded, false);
+        fields->spawnedModLoaded = true;
+    }
 }
 
 void MyBaseLayer::resetLevelVariables() {
@@ -210,9 +214,14 @@ void MyBaseLayer::resetLevelVariables() {
     }
 }
 
+void MyBaseLayer::setupLevelStart(LevelSettingsObject* p0) {
+    GJBaseGameLayer::setupLevelStart(p0);
+    m_fields->spawnedModLoaded = false;
+}
+
 void MyBaseLayer::setupText(std::string_view t) {
     log::debug("parsing {}", t);
-    if(t.front() != '@') return;
+    if(!t.starts_with("inf_inp:")) return;
     auto parsed_opt = getTupleFromLabel(t);
     if(!parsed_opt) {
         return;
@@ -263,6 +272,7 @@ void MyBaseLayer::setupKeybinds_step0(float) {
 
     if(!fields->touchDelegate) {
         fields->touchDelegate = new MyClickDelegate;
+        fields->touchDelegate->autorelease();
         fields->touchDelegate->setID("iandyhd.keyboardsupport/touch-delegate");
         fields->touchDelegate->setContentSize(this->getContentSize());
         addChild(fields->touchDelegate, INT_MAX);
@@ -271,6 +281,7 @@ void MyBaseLayer::setupKeybinds_step0(float) {
 
     if(!fields->scrollDelegate) {
         fields->scrollDelegate = new MyScrollDelegate;
+        fields->scrollDelegate->autorelease();
         fields->scrollDelegate->setID("iandyhd.keyboardsupport/scroll-delegate");
         fields->scrollDelegate->setContentSize(this->getContentSize());
         addChild(fields->scrollDelegate, INT_MAX);
@@ -279,6 +290,7 @@ void MyBaseLayer::setupKeybinds_step0(float) {
     if(fields->cursorFollowGroupId != -1) {
         setupCursorGroup(fields->cursorFollowGroupId);
     }
+
     fields->active = true;
 }
 

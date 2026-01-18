@@ -36,6 +36,7 @@ class $modify(MyBaseLayer, GJBaseGameLayer)
         bool altPressed = false;
         bool shiftPressed = false;
         bool active = false;
+        bool spawnedModLoaded = false;
         bool addedAtleastOneKey = false;
         GJBaseGameLayer* layer = nullptr;
         int i = 0;
@@ -81,6 +82,8 @@ class $modify(MyBaseLayer, GJBaseGameLayer)
 
 
     void resetLevelVariables();
+
+    void setupLevelStart(LevelSettingsObject* p0);
 
     void setupText(std::string_view t);
 

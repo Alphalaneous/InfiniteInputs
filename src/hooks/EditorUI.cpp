@@ -1,46 +1,93 @@
-// #include "EditorUI.hpp"
-// #include <Geode/binding/CreateMenuItem.hpp>
-// #include <alphalaneous.editortab_api/include/EditorTabs.hpp>
-// #include <Geode/Geode.hpp>
+#include "EditorUI.hpp"
+#include "Geode/utils/cocos.hpp"
+#include <Geode/Geode.hpp>
+#include <Geode/binding/CreateMenuItem.hpp>
+#include <Geode/binding/EditButtonBar.hpp>
+#include <Geode/binding/EditorUI.hpp>
+#include <Geode/binding/GameObject.hpp>
+#include <Geode/binding/TextGameObject.hpp>
+#include "../InputTriggerPopup.hpp"
 
-// using namespace geode::prelude;
+constexpr int INPUT_TRIGGER_ID = -53246;
 
-// constexpr int getRandomObjectId = 53246;
+using namespace geode::prelude;
 
-// bool MyEditorUI::init(LevelEditorLayer* editor)
-// {
-//     if(!EditorUI::init(editor)) return false;
+void MyEditorUI::setupCreateMenu() {
+    EditorUI::setupCreateMenu();
 
-//     log::info("editor ui init");
-//         EditorTabs::addTab(this /*The EditorUI*/, TabType::BUILD, "rawr"_spr, [](EditorUI* ui, CCMenuItemToggler* toggler) -> CCNode* { //create the tab
-//         auto arr = CCArray::create();
-//         auto trigger = ui->getCreateBtn(1, 4);
-//         trigger->m_objectID = 53246;
-//         trigger->setID("mytrigger");
-//         arr->addObject(trigger);
-//         CCLabelBMFont* textLabelOn = CCLabelBMFont::create("uwu", "bigFont.fnt");
-//         textLabelOn->setScale(0.4f);
-//         CCLabelBMFont* textLabelOff = CCLabelBMFont::create("owo", "bigFont.fnt");
-//         textLabelOff->setScale(0.4f);
-//         EditorTabUtils::setTabIcons(toggler, textLabelOn, textLabelOff);
-//         log::info("created tab i guess");
-//         return EditorTabUtils::createEditButtonBar(arr, ui);
-        
-//     }, [](EditorUI*, bool state, CCNode*) { //toggled the tab (activates on every tab click)
-//         log::info("{}", state);
-//     });
+    auto bar = CCArrayExt<EditButtonBar*>(m_createButtonBars)[12];
 
-//     return true;
+    auto btn = menuItemFromObjectString("1,914,31,aW5mX2lucDplZGl0b3JUYWIgPSAw", INPUT_TRIGGER_ID);
+    btn->setTag(INPUT_TRIGGER_ID);
 
-// }
+    m_createButtonArray->addObject(btn);
 
-// GameObject* MyEditorUI::createObject(int objectID, CCPoint position)
-// {
-//     log::info("{} {}", objectID, position);
-//     if(objectID == 53246)
-//     {
-//         return EditorUI::createObject(1, position);
-//     }
-//     return EditorUI::createObject(objectID, position);
+    int idx = 0;
+    for (auto btn : CCArrayExt<CreateMenuItem*>(bar->m_buttonArray)) {
+        idx++;
+        if (btn->m_objectID == 1595) {
+            break;
+        }
+    }
 
-// }
+    bar->m_buttonArray->insertObject(btn, idx);
+    
+    bar->reloadItems(
+        GameManager::get()->getIntGameVariable("0049"),
+        GameManager::get()->getIntGameVariable("0050")
+    );
+}
+
+void MyEditorUI::onCreateObject(int objectID) {
+    if (objectID != INPUT_TRIGGER_ID) return EditorUI::onCreateObject(objectID);
+    objectID = 914;
+    
+    EditorUI::onCreateObject(objectID);
+
+    if (m_selectedObject) {
+        auto textObj = static_cast<TextGameObject*>(m_selectedObject);
+        textObj->updateTextObject("inf_inp:empty 1 = 0", false);
+    }
+}
+
+void MyEditorUI::clickOnPosition(cocos2d::CCPoint position) {
+    EditorUI::clickOnPosition(position);
+    if (m_selectedObjectIndex != 914) return;
+    if (m_selectedMode != 2) return;
+
+    auto nodePos = m_editorLayer->m_objectLayer->convertToNodeSpace(position);
+
+    auto obj = m_editorLayer->objectAtPosition(nodePos);
+    auto textGameObject = typeinfo_cast<TextGameObject*>(obj);
+    if (!textGameObject) return;
+
+    std::string_view view = textGameObject->m_text;
+    if (view.starts_with("inf_inp:")) {
+        m_selectedObjectIndex = INPUT_TRIGGER_ID;
+        updateCreateMenu(true);
+    }
+}
+
+void MyEditorUI::editObject(cocos2d::CCObject* sender) {
+    std::vector<Ref<GameObject>> selectedObjects;
+    if (m_selectedObject) selectedObjects.push_back(m_selectedObject);
+    if (m_selectedObjects) {
+        auto arr = CCArrayExt<GameObject*>(m_selectedObjects);
+        selectedObjects.insert(selectedObjects.end(), arr.begin(), arr.end()); 
+    }
+
+    if (selectedObjects.size() == 0) return EditorUI::editObject(sender);
+
+    int objectID = selectedObjects[0]->m_objectID;
+    if (objectID != 914) return EditorUI::editObject(sender);
+
+    if (selectedObjects.size() > 1) {
+        for (auto obj : selectedObjects) {
+            if (obj->m_objectID != objectID) {
+                return EditorUI::editObject(sender);
+            }
+        }
+    }
+
+    InputTriggerPopup::create(selectedObjects)->show();
+}

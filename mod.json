@@ -12,11 +12,10 @@
 	"developer": "iAndyHD3",
 	"description": "Bind objs to cursor or keys to spawn group ID",
 	"dependencies":{
-		"alphalaneous.alphas-ui-pack": ">=1.0.0",
-		"alphalaneous.editortab_api": ">=1.0.19"
+		"alphalaneous.alphas-ui-pack": ">=1.0.0"
 	},
 	"resources": {
-		"sprites": ["resources/logo.png"]
+		"sprites": ["resources/*.png"]
 	},
 	"links": {
 		"source": "https://github.com/iAndyHD3/InfiniteInputs",

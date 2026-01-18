@@ -4,6 +4,8 @@
 using namespace cocos2d;
 
 enum class LevelKeys {
+    editorTab = -3,
+    empty = -2,
     unknown = -1,
     f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12,
     KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_8, KEY_9, KEY_0,
@@ -25,9 +27,9 @@ enum class LevelKeys {
     wheelUp,
     wheelDown,
 
-    cursor
+    cursor,
+    modLoaded
 };
-
 
 struct LevelKeyBinding
 {
