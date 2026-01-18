@@ -31,11 +31,20 @@ void MyTextGameObject::setupInputTrigger() {
             }
         }
 
-        auto groupLabel = CCLabelBMFont::create(labelStr.c_str(), "bigFont.fnt");
-        groupLabel->setScale(0.5f);
-        groupLabel->setZOrder(1);
+        auto labelContainer = CCNodeRGBA::create();
+        labelContainer->ignoreAnchorPointForPosition(false);
+        labelContainer->setAnchorPoint({0.5f, 0.5f});
+        labelContainer->setScale(0.5f);
+        labelContainer->setZOrder(1);
+        labelContainer->setCascadeOpacityEnabled(true);
 
-        addChild(groupLabel);
+        auto groupLabel = CCLabelBMFont::create(labelStr.c_str(), "bigFont.fnt");
+
+        labelContainer->setContentSize(groupLabel->getContentSize());
+        groupLabel->setPosition(labelContainer->getContentSize() * 0.5f);
+
+        labelContainer->addChild(groupLabel);
+        addChild(labelContainer);
 
         auto spr = CCSprite::create("input_trigger.png"_spr);
 
@@ -45,7 +54,7 @@ void MyTextGameObject::setupInputTrigger() {
         updateOrientedBox();
 
         spr->setPosition(getContentSize() * 0.5f);
-        groupLabel->setPosition({getContentWidth() * 0.5f, 10.5f});
+        labelContainer->setPosition({getContentWidth() * 0.5f, 10.5f});
 
         addChild(spr);
 
