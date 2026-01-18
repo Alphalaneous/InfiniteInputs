@@ -117,3 +117,8 @@ Enable console in the geode console, as there are quite many logs to help pinpoi
 
 File them on [Github Issues](https://github.com/iAndyHD3/InfiniteInputs/issues/new)
 Or join the [Discord Server](discord.gg/7kyvwJVcqJ)
+
+# Special Thanks / Credits
+
+- [TheMilkCat](user:7060183) - For commissioning the mod!
+- Alphalaneous - For the amazing UI API, which this mod uses.
