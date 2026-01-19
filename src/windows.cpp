@@ -8,29 +8,35 @@
 
 extern void CROSSPLATFORM_ON_KEY_CALLBACK(LevelKeys key, bool down);
 
+std::unordered_map<int, bool> g_keyDown;
 
+LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
+    if (nCode == HC_ACTION) {
+        int key = ((KBDLLHOOKSTRUCT*)lParam)->vkCode;
 
-//for the mod reviewer reading this that will say that this could be done only in UILayer hooks:
-//Know what? You're actually right, UILayer::handleKeyPress works great
-//The problem ofcourse is that I assumed custom keybinds was a good mod and wouldn't fuck things up there.
-//It swallows jump touches for no reason AND it sends the wrong keys for everything else.
-//So no, I won't be using UILayer hooks even tho I really wanted to, that said I hope custom keybinds gets deleted one day :)
+        bool sendPress = false;
+        bool down = false;
+        
+        if (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN) {
+            down = true;
+            sendPress = true;
+        }
+        else if (wParam == WM_KEYUP || wParam == WM_SYSKEYUP) {
+            down = false;
+            sendPress = true;
+        }
 
-class $modify(cocos2d::CCEGLView)
-{
-    //action == 0, up
-    //action == 1, down
-    //action == 2, hold
-    void onGLFWKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
-	{
-        CCEGLView::onGLFWKeyCallback(window, key, scancode, action, mods);
-        if(action >= 2) return;
-        geode::log::debug("key: {}, scancode: {}, action; {}, mods: {}", key, scancode, action, mods);
+        if (sendPress && (!g_keyDown[key] || !down)) {
+            g_keyDown[key] = down;
+            CROSSPLATFORM_ON_KEY_CALLBACK(vkKeyToLevelKey(key), down);
+            geode::log::debug("key: {}, down: {}", key, down);
+        }
+    }
+    return CallNextHookEx(NULL, nCode, wParam, lParam);
+}
 
-        CROSSPLATFORM_ON_KEY_CALLBACK(glfwKeyToLevelKey(key), action == 1);
-
-	}
-};
-
+$execute {
+    SetWindowsHookEx(WH_KEYBOARD_LL, KeyboardProc, NULL, 0);
+}
 
 #endif

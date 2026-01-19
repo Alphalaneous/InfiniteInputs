@@ -371,6 +371,7 @@ CCMenuItemToggler* InputTriggerPopup::createKeyboardToggler(LevelKeys key, float
     auto keyLabelOn = CCLabelBMFont::create(keyStr.c_str(), "bigFont.fnt");
     keyLabelOn->setScale(0.5f);
     keyLabelOn->setPosition(onSpr->getContentSize() * 0.5f);
+    keyLabelOn->limitLabelWidth(width - 8, 0.5f, 0.1f);
 
     onSpr->setScale(0.6f);
     onSpr->addChild(keyLabelOn);
@@ -378,6 +379,7 @@ CCMenuItemToggler* InputTriggerPopup::createKeyboardToggler(LevelKeys key, float
     auto keyLabelOff = CCLabelBMFont::create(keyStr.c_str(), "bigFont.fnt");
     keyLabelOff->setScale(0.5f);
     keyLabelOff->setPosition(offSpr->getContentSize() * 0.5f);
+    keyLabelOff->limitLabelWidth(width - 8, 0.5f, 0.1f);
 
     offSpr->setScale(0.6f);
     offSpr->addChild(keyLabelOff);
@@ -402,7 +404,7 @@ CCMenuItemToggler* InputTriggerPopup::createKeyboardToggler(LevelKeys key, float
 
 CCMenu* InputTriggerPopup::createKeyboardMenu(float gap, float yOffset, int row) {
     CCMenu* menu = CCMenu::create();
-    menu->setContentSize({380, 40});
+    menu->setContentSize({386, 40});
     menu->ignoreAnchorPointForPosition(false);
     menu->setAnchorPoint({0.5f, 1.f});
     menu->setPosition({m_mainLayer->getContentWidth() * 0.5f, m_mainLayer->getContentHeight() - yOffset});
@@ -410,10 +412,20 @@ CCMenu* InputTriggerPopup::createKeyboardMenu(float gap, float yOffset, int row)
 
     auto layout = RowLayout::create();
     layout->setAutoScale(false);
+    layout->setAxisAlignment(AxisAlignment::Start);
     layout->setGap(gap);
     menu->setLayout(layout);
 
     return menu;
+}
+
+CCNode* InputTriggerPopup::createSpacer(float width) {
+    auto spacer = CCNode::create();
+    spacer->ignoreAnchorPointForPosition(false);
+    spacer->setAnchorPoint({0.5f, 0.5f});
+    spacer->setContentSize({width * 0.5f, 1});
+
+    return spacer;
 }
 
 void InputTriggerPopup::setupKeyboardTab() {
@@ -424,16 +436,19 @@ void InputTriggerPopup::setupKeyboardTab() {
     keyboardContainer->setID("keyboard-container");
     m_tabs.push_back(keyboardContainer);
 
-    auto row1Menu = createKeyboardMenu(2.f, 70, 1);
+    auto row1Menu = createKeyboardMenu(2.f, 66, 1);
 
+    row1Menu->addChild(createSpacer(100));
     row1Menu->addChild(createKeyboardToggler(LevelKeys::f1));
     row1Menu->addChild(createKeyboardToggler(LevelKeys::f2));
     row1Menu->addChild(createKeyboardToggler(LevelKeys::f3));
     row1Menu->addChild(createKeyboardToggler(LevelKeys::f4));
+    row1Menu->addChild(createSpacer(20));
     row1Menu->addChild(createKeyboardToggler(LevelKeys::f5));
     row1Menu->addChild(createKeyboardToggler(LevelKeys::f6));
     row1Menu->addChild(createKeyboardToggler(LevelKeys::f7));
     row1Menu->addChild(createKeyboardToggler(LevelKeys::f8));
+    row1Menu->addChild(createSpacer(20));
     row1Menu->addChild(createKeyboardToggler(LevelKeys::f9));
     row1Menu->addChild(createKeyboardToggler(LevelKeys::f10));
     row1Menu->addChild(createKeyboardToggler(LevelKeys::f11));
@@ -444,6 +459,7 @@ void InputTriggerPopup::setupKeyboardTab() {
 
     auto row2Menu = createKeyboardMenu(2.f, 96, 2);
 
+    row2Menu->addChild(createKeyboardToggler(LevelKeys::grave, 40, "`"));
     row2Menu->addChild(createKeyboardToggler(LevelKeys::KEY_1));
     row2Menu->addChild(createKeyboardToggler(LevelKeys::KEY_2));
     row2Menu->addChild(createKeyboardToggler(LevelKeys::KEY_3));
@@ -454,12 +470,16 @@ void InputTriggerPopup::setupKeyboardTab() {
     row2Menu->addChild(createKeyboardToggler(LevelKeys::KEY_8));
     row2Menu->addChild(createKeyboardToggler(LevelKeys::KEY_9));
     row2Menu->addChild(createKeyboardToggler(LevelKeys::KEY_0));
+    row2Menu->addChild(createKeyboardToggler(LevelKeys::minus, 40, "-"));
+    row2Menu->addChild(createKeyboardToggler(LevelKeys::equal, 40, "="));
+    row2Menu->addChild(createKeyboardToggler(LevelKeys::backspace, 80));
     
     row2Menu->updateLayout();
     keyboardContainer->addChild(row2Menu);
 
     auto row3Menu = createKeyboardMenu(2.f, 122, 3);
 
+    row3Menu->addChild(createKeyboardToggler(LevelKeys::tab, 60));
     row3Menu->addChild(createKeyboardToggler(LevelKeys::q));
     row3Menu->addChild(createKeyboardToggler(LevelKeys::w));
     row3Menu->addChild(createKeyboardToggler(LevelKeys::e));
@@ -470,12 +490,16 @@ void InputTriggerPopup::setupKeyboardTab() {
     row3Menu->addChild(createKeyboardToggler(LevelKeys::i));
     row3Menu->addChild(createKeyboardToggler(LevelKeys::o));
     row3Menu->addChild(createKeyboardToggler(LevelKeys::p));
+    row3Menu->addChild(createKeyboardToggler(LevelKeys::leftBracket, 40, "["));
+    row3Menu->addChild(createKeyboardToggler(LevelKeys::rightBracket, 40, "]"));
+    row3Menu->addChild(createKeyboardToggler(LevelKeys::backSlash, 60, "\\"));
     
     row3Menu->updateLayout();
     keyboardContainer->addChild(row3Menu);
 
     auto row4Menu = createKeyboardMenu(2.f, 148, 4);
 
+    row4Menu->addChild(createKeyboardToggler(LevelKeys::capsLock, 75, "Caps Lock"));
     row4Menu->addChild(createKeyboardToggler(LevelKeys::a));
     row4Menu->addChild(createKeyboardToggler(LevelKeys::s));
     row4Menu->addChild(createKeyboardToggler(LevelKeys::d));
@@ -485,13 +509,16 @@ void InputTriggerPopup::setupKeyboardTab() {
     row4Menu->addChild(createKeyboardToggler(LevelKeys::j));
     row4Menu->addChild(createKeyboardToggler(LevelKeys::k));
     row4Menu->addChild(createKeyboardToggler(LevelKeys::l));
-    row4Menu->addChild(createKeyboardToggler(LevelKeys::enter, 90, "Enter"));
+    row4Menu->addChild(createKeyboardToggler(LevelKeys::semicolon, 40, ";"));
+    row4Menu->addChild(createKeyboardToggler(LevelKeys::apostrophe, 40, "'"));
+    row4Menu->addChild(createKeyboardToggler(LevelKeys::enter, 88, "Enter"));
     
     row4Menu->updateLayout();
     keyboardContainer->addChild(row4Menu);
 
     auto row5Menu = createKeyboardMenu(2.f, 174, 5);
 
+    row5Menu->addChild(createKeyboardToggler(LevelKeys::leftShift, 100, "Shift"));
     row5Menu->addChild(createKeyboardToggler(LevelKeys::z));
     row5Menu->addChild(createKeyboardToggler(LevelKeys::x));
     row5Menu->addChild(createKeyboardToggler(LevelKeys::c));
@@ -499,16 +526,23 @@ void InputTriggerPopup::setupKeyboardTab() {
     row5Menu->addChild(createKeyboardToggler(LevelKeys::b));
     row5Menu->addChild(createKeyboardToggler(LevelKeys::n));
     row5Menu->addChild(createKeyboardToggler(LevelKeys::m));
-    row5Menu->addChild(createKeyboardToggler(LevelKeys::leftShift, 80, "Shift"));
+    row5Menu->addChild(createKeyboardToggler(LevelKeys::comma, 40, ","));
+    row5Menu->addChild(createKeyboardToggler(LevelKeys::period, 40, "."));
+    row5Menu->addChild(createKeyboardToggler(LevelKeys::forwardSlash, 40, "/"));
+    row5Menu->addChild(createKeyboardToggler(LevelKeys::rightShift, 106, "Shift"));
     
     row5Menu->updateLayout();
     keyboardContainer->addChild(row5Menu);
 
     auto row6Menu = createKeyboardMenu(2.f, 200, 6);
 
-    row6Menu->addChild(createKeyboardToggler(LevelKeys::leftCtrl, 50, "Ctrl"));
-    row6Menu->addChild(createKeyboardToggler(LevelKeys::leftAlt, 50, "Alt"));
-    row6Menu->addChild(createKeyboardToggler(LevelKeys::space, 240, "Space"));
+    row6Menu->addChild(createKeyboardToggler(LevelKeys::leftCtrl, 54, "Ctrl"));
+    row6Menu->addChild(createSpacer(66));
+    row6Menu->addChild(createKeyboardToggler(LevelKeys::leftAlt, 54, "Alt"));
+    row6Menu->addChild(createKeyboardToggler(LevelKeys::space, 260, "Space"));
+    row6Menu->addChild(createKeyboardToggler(LevelKeys::rightAlt, 54, "Alt"));
+    row6Menu->addChild(createSpacer(110));
+    row6Menu->addChild(createKeyboardToggler(LevelKeys::rightCtrl, 54, "Ctrl"));
 
     row6Menu->updateLayout();
     keyboardContainer->addChild(row6Menu);

@@ -23,6 +23,7 @@ protected:
     CCMenuItemToggler* createTabToggler(const std::string& label, int tab);
     CCMenuItemToggler* createKeyboardToggler(LevelKeys key, float width = 40, const std::string& labelOverride = "");
     CCMenu* createKeyboardMenu(float gap, float yOffset, int row);
+    CCNode* createSpacer(float width);
 
     void setupKeyboardTab();
     void setupMouseTab();

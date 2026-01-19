@@ -174,24 +174,8 @@ void MyBaseLayer::handleClick(alpha::dispatcher::TouchEvent* touch, bool down) {
 }
 
 void MyBaseLayer::updateLoop(float) {
-    auto kb = CCDirector::get()->getKeyboardDispatcher();
     auto fields = m_fields.self();
-    bool control = kb->getControlKeyPressed();
-    if(control != fields->controlPressed) {
-        fields->controlPressed = control;
-        nh_handleKeypress(LevelKeys::leftCtrl, control);
-    }
-    bool shift = kb->getShiftKeyPressed();
-    if(shift != fields->shiftPressed) {
-        fields->shiftPressed = shift;
-        nh_handleKeypress(LevelKeys::leftShift, shift);
-    }
-    bool alt = kb->getAltKeyPressed();
-    if(alt != fields->altPressed) {
-        fields->altPressed = alt;
-        nh_handleKeypress(LevelKeys::leftAlt, alt);
-    }
-
+    
     for(const auto& o : fields->cursorFollowObjects) {
         //LOGI(o->m_objectID, o->m_isUIObject, o->getRealPosition());
 
@@ -304,8 +288,6 @@ void MyBaseLayer::setupKeybinds_step0(float) {
 
     fields->active = true;
 }
-
-
 
 void MyBaseLayer::handleScroll(float x, float y) {
     if(y != 0) {
